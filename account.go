@@ -1,6 +1,9 @@
 package main
 
-import "log"
+import (
+	"fmt"
+	"log"
+)
 
 type Account struct {
 	positions   *Positions
@@ -119,5 +122,24 @@ func (a *Account) SetLosscutValueWithClose(current float64, lv float64) {
 
 		i = i.next
 		id++
+	}
+}
+
+func (a *Account) Dump(current float64) {
+	fmt.Printf("current: %f\n", current)
+	fmt.Printf("valuation: %f\n", a.Valuation(current))
+	fmt.Printf("count: %d\n", a.Positions().Size())
+	fmt.Printf("unbound cash: %f\n", a.unboundCash)
+	fmt.Printf("positions:\n")
+	i := a.positions.minItem
+	for i != nil {
+		fmt.Printf(
+			"  unit: %f, valuation: %f, losscut value: %f, bound margin: %f\n",
+			i.position.unit,
+			i.position.Valuation(current),
+			i.position.LosscutValue(),
+			i.position.BoundMargin(),
+		)
+		i = i.next
 	}
 }

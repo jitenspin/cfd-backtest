@@ -6,11 +6,15 @@ import (
 )
 
 func main() {
-	index, err := ReadDailyData("./SP500_daily_20090101_20200814.csv")
+	// start := "20200101"
+	start := "20000101"
+	// end := "20200814"
+	end := "20091231"
+	index, err := ReadDailyData(fmt.Sprintf("./SP500_daily_%s_%s.csv", start, end))
 	if err != nil {
 		log.Fatalf("Failed to read index csv: %v", err)
 	}
-	iv, err := ReadDailyData("./VIX_daily_20090101_20200814.csv")
+	iv, err := ReadDailyData(fmt.Sprintf("./VIX_daily_%s_%s.csv", start, end))
 	if err != nil {
 		log.Fatalf("Failed to read IV csv: %v", err)
 	}
@@ -20,9 +24,9 @@ func main() {
 	}
 
 	a := NewAccount()
-	a.Deposit(1000)
+	a.Deposit(10000)
 
-	indexMA := NewDailyMA(20)
+	indexMA := NewDailyMA(40)
 	ivMA := NewDailyMA(20)
 
 	for i := range index {
@@ -41,11 +45,12 @@ func main() {
 		a.FullOpen(d.open, lv)
 		a.Losscut(d.low)
 
-		log.Printf("date: %s, valuation: %f, count: %d", d.date, a.Valuation(d.close), a.Positions().Size())
-		fmt.Printf("%s\t%f\n", d.date, a.Valuation(d.close))
+		log.Printf("date: %s, losscut value: %f, unbound cash: %f, count: %d", d.date, lv, a.unboundCash, a.Positions().Size())
+		log.Printf("  valuation: %f (%f, %f) -> %f (%f, %f)", a.Valuation(d.open), d.open, v.open, a.Valuation(d.close), d.close, v.close)
+		// fmt.Printf("%s\t%f\n", d.date, a.Valuation(d.close))
 	}
 
-	log.Printf("valuation: %f, count: %d", a.Valuation(index[len(index)-1].close), a.Positions().Size())
+	a.Dump(index[len(index)-1].close)
 }
 
 func CalcLosscutValue(
@@ -58,7 +63,7 @@ func CalcLosscutValue(
 	if currentIV > avgIV {
 		percent = 100 - (currentIV-10)*10
 	} else {
-		percent = 100 - (currentIV - 20)
+		percent = 100 - (currentIV-20)*1
 	}
 	return avgIndex * percent / 100
 }
