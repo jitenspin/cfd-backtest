@@ -6,10 +6,10 @@ import (
 )
 
 func main() {
-	// start := "20200101"
-	start := "20000101"
-	// end := "20200814"
-	end := "20091231"
+	start := "20090101"
+	// start := "20000101"
+	end := "20200814"
+	// end := "20091231"
 	index, err := ReadDailyData(fmt.Sprintf("./SP500_daily_%s_%s.csv", start, end))
 	if err != nil {
 		log.Fatalf("Failed to read index csv: %v", err)
@@ -24,7 +24,7 @@ func main() {
 	}
 
 	a := NewAccount()
-	a.Deposit(10000)
+	a.Deposit(100)
 
 	indexMA := NewDailyMA(40)
 	ivMA := NewDailyMA(20)
@@ -41,7 +41,8 @@ func main() {
 			v.open,
 		)
 
-		a.SetLosscutValueWithClose(d.open, lv)
+		// a.SetLosscutValueWithClose(d.open, lv)
+		a.CloseAll(d.open)
 		a.FullOpen(d.open, lv)
 		a.Losscut(d.low)
 
@@ -50,7 +51,7 @@ func main() {
 		// fmt.Printf("%s\t%f\n", d.date, a.Valuation(d.close))
 	}
 
-	a.Dump(index[len(index)-1].close)
+	// a.Dump(index[len(index)-1].close)
 }
 
 func CalcLosscutValue(

@@ -125,6 +125,13 @@ func (a *Account) SetLosscutValueWithClose(current float64, lv float64) {
 	}
 }
 
+// 持っている建玉をすべて決済する
+func (a *Account) CloseAll(current float64) {
+	for a.Positions().Size() != 0 {
+		a.CloseMax(current)
+	}
+}
+
 func (a *Account) Dump(current float64) {
 	fmt.Printf("current: %f\n", current)
 	fmt.Printf("valuation: %f\n", a.Valuation(current))
