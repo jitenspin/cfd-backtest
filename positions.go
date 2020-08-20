@@ -173,6 +173,13 @@ func (ps *Positions) Valuation(current float64) float64 {
 	})
 }
 
+// 必要証拠金
+func (ps *Positions) RequiredMargin() float64 {
+	return ps.sum(func(p *Position) float64 {
+		return p.RequiredMargin()
+	})
+}
+
 // 拘束証拠金
 func (ps *Positions) BoundMargin() float64 {
 	return ps.sum(func(p *Position) float64 {

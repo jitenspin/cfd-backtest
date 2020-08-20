@@ -93,3 +93,32 @@ func TestValuation(t *testing.T) {
 	assert.Equal(t, 1100.0, p.Valuation(1500))
 	assert.Equal(t, 100.0, p.Valuation(500))
 }
+
+func TestSetLeverage(t *testing.T) {
+	p := NewPosition(1000)
+
+	ls := map[float64]float64{
+		10:  10,
+		1:   1,
+		100: 10,
+		0.1: 1,
+		2:   2,
+		5:   5,
+	}
+
+	for l, e := range ls {
+		p.SetLeverage(l)
+		assert.Equal(t, e, p.Leverage())
+	}
+}
+
+func TestAdditionalMarginToLeverage(t *testing.T) {
+	p := NewPosition(1000)
+
+	assert.Equal(t, 0.0, p.AdditionalMarginToLeverage(10))
+	assert.Equal(t, 900.0, p.AdditionalMarginToLeverage(1))
+	assert.Equal(t, 0.0, p.AdditionalMarginToLeverage(100))
+	assert.Equal(t, 900.0, p.AdditionalMarginToLeverage(0.1))
+	assert.Equal(t, 400.0, p.AdditionalMarginToLeverage(2))
+	assert.Equal(t, 100.0, p.AdditionalMarginToLeverage(5))
+}

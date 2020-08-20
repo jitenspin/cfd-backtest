@@ -80,8 +80,7 @@ func (p *Position) AdditionalMarginToLosscutValue(v float64) float64 {
 	return p.LosscutValue() - v
 }
 
-// 指定した値をロスカット値として設定しつつ、追加で必要な証拠金を返す
-// 余ればマイナスになる
+// 指定した値をロスカット値として設定しする
 // 設定可能なロスカット値の最大値・最小値を超える場合は最大値・最小値を設定するものとして扱う
 // 副作用あり
 func (p *Position) SetLosscutValue(v float64) {
@@ -93,4 +92,25 @@ func (p *Position) SetLosscutValue(v float64) {
 // 指定した値で決済したときに未拘束残高として返ってくる金額
 func (p *Position) Valuation(current float64) float64 {
 	return p.BoundMargin() + current - p.Unit()
+}
+
+// 指定したレバレッジ倍率に設定する
+// 1倍以下、10倍以上はそれぞれ1倍、10倍扱いとする
+func (p *Position) SetLeverage(l float64) {
+	p.optionalMargin += p.AdditionalMarginToLeverage(l)
+}
+
+// 指定したレバレッジ倍率にするために追加で必要な証拠金を返す
+// 余ればマイナスとなる
+// 1倍以下、10倍以上はそれぞれ1倍、10倍扱いとする
+func (p *Position) AdditionalMarginToLeverage(l float64) float64 {
+	if l < 1 {
+		l = 1
+	}
+	if l > 10 {
+		l = 10
+	}
+	// unit / bound_margin = leverage
+	// unit / leverage = bound_margin
+	return p.Unit()/l - p.BoundMargin()
 }

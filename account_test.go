@@ -38,7 +38,7 @@ func TestAccountValuation(t *testing.T) {
 	assert.Equal(t, 1000.0, a.Valuation(1000))
 }
 
-func TestLosscut(t *testing.T) {
+func TestExecLosscut(t *testing.T) {
 	a := NewAccount()
 
 	a.Deposit(600)
@@ -47,7 +47,7 @@ func TestLosscut(t *testing.T) {
 
 	assert.Equal(t, 3, a.Positions().Size())
 	assert.Equal(t, 0.0, a.Remaining(2000))
-	a.Losscut(1500)
+	a.ExecLosscut(1500)
 	assert.Equal(t, 1, a.Positions().Size())
 	assert.Equal(t, 200.0, a.Remaining(1500))
 }
