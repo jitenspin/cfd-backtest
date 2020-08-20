@@ -155,15 +155,15 @@ func (ps *Positions) RemoveMax() {
 }
 
 // 評価損
+// 各ポジションの評価損益同士で打ち消し合うことに注意
 func (ps *Positions) ValuationLoss(current float64) float64 {
-	return ps.sumrBreak(func(p *Position) (bool, float64) {
-		l := p.ValuationLoss(current)
-		if l == 0 {
-			// これ以上は損しているポジションはない
-			return true, l
-		}
-		return false, l
+	s := ps.sum(func(p *Position) float64 {
+		return p.Valuation(current) - p.BoundMargin()
 	})
+	if s < 0 {
+		return s * -1
+	}
+	return 0
 }
 
 // 評価額
