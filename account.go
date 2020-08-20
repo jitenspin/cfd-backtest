@@ -100,6 +100,15 @@ func (a *Account) CloseMax(current float64) {
 	}
 }
 
+// 建単価が最大のポジションを決済
+func (a *Account) CloseMin(current float64) {
+	p := a.positions.Min()
+	if p != nil {
+		a.unboundCash += p.Valuation(current * BidFactor)
+		a.positions.RemoveMin()
+	}
+}
+
 // 持っているすべてのポジションのロスカット値を変更する
 // 余力が足りなければ建単価が大きいものから決済する
 func (a *Account) SetLosscutValueWithClose(current float64, lv float64) {
@@ -157,20 +166,21 @@ func (a *Account) Dump(current float64) {
 }
 
 // 持っているすべてのポジションのレバレッジ倍率を変更する
-// 余力が足りなければ建単価が大きいものから決済する
+// 余力が足りなければ建単価が*小さい*ものから決済する
+// レバレッジが一定であれば、建単価が小さいものから決済したほうが余力は大きく増える
 func (a *Account) SetLeverageWithClose(current float64, l float64) {
-	// TODO: minItem とか next とかは positions.go に閉じ込める
-	i := a.positions.minItem
+	// TODO: maxItem とか next とかは positions.go に閉じ込める
+	i := a.positions.maxItem
 	id := 0
 	for i != nil {
 		m := i.position.AdditionalMarginToLeverage(l)
 		r := a.Remaining(current)
 		for r < m {
 			// 余力が足りない場合は足りるまで決済していく
-			a.CloseMax(current)
+			a.CloseMin(current)
 			r = a.Remaining(current)
 			// 自身が決済されたら終了
-			// なお、自身よりも小さい建単価までは決済されることはない
+			// なお、自身よりも大きい建単価までは決済されることはない
 			if a.positions.Size() <= id {
 				return
 			}
@@ -179,7 +189,7 @@ func (a *Account) SetLeverageWithClose(current float64, l float64) {
 		i.position.SetLeverage(l)
 		a.unboundCash -= m
 
-		i = i.next
+		i = i.prev
 		id++
 	}
 }
