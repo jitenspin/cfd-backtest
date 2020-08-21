@@ -187,6 +187,13 @@ func (ps *Positions) BoundMargin() float64 {
 	})
 }
 
+// レバレッジ倍率
+func (ps *Positions) Leverage() float64 {
+	return ps.sum(func(p *Position) float64 {
+		return p.Unit()
+	}) / ps.BoundMargin()
+}
+
 // 畳み込み
 func (ps *Positions) sum(f func(*Position) float64) float64 {
 	s := 0.0
@@ -194,20 +201,6 @@ func (ps *Positions) sum(f func(*Position) float64) float64 {
 	for i != nil {
 		s += f(i.position)
 		i = i.next
-	}
-	return s
-}
-
-func (ps *Positions) sumrBreak(f func(*Position) (bool, float64)) float64 {
-	s := 0.0
-	i := ps.maxItem
-	for i != nil {
-		b, c := f(i.position)
-		s += c
-		if b {
-			break
-		}
-		i = i.prev
 	}
 	return s
 }
