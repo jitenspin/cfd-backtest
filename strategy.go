@@ -24,6 +24,7 @@ func (l *LosscutValueStrategy) PrepareDay(a *Account, index float64, iv float64)
 	l.indexMA.Push(index)
 	l.ivMA.Push(iv)
 
+	// NOTE: VIXのほうが早いため、これは現実には不可能
 	lv := l.calcLosscutValue(index, iv)
 
 	nokosu := true
