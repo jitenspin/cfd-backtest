@@ -56,7 +56,7 @@ func (m *MA) RSI() float64 {
 
 // -100~+100
 func (m *MA) RCI() float64 {
-	if len(m.q) == 0 {
+	if len(m.q) <= 1 {
 		return 0.0
 	}
 	l := len(m.q)
