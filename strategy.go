@@ -1,6 +1,9 @@
 package main
 
-import "math"
+import (
+	"log"
+	"math"
+)
 
 type Strategy interface {
 	PrepareDay(a *Account, index float64, iv float64)
@@ -83,14 +86,16 @@ func (l *LosscutValueStrategy) calcLosscutValue(index float64, iv float64) float
 // leverage rate strategy
 
 type LeverageRatioStrategy struct {
-	indexMA *MA
-	ivMA    *MA
+	indexMA  *MA
+	ivMA     *MA
+	bullDays int
 }
 
 func NewLeverageRatioStrategy() *LeverageRatioStrategy {
 	return &LeverageRatioStrategy{
-		indexMA: NewMA(40),
-		ivMA:    NewMA(20),
+		indexMA:  NewMA(40),
+		ivMA:     NewMA(20),
+		bullDays: 1,
 	}
 }
 
@@ -139,6 +144,29 @@ func (l *LeverageRatioStrategy) calcLeverageRatio(iv float64) float64 {
 	}()
 	_ = v1
 
+	v1signal := func() float64 {
+		base := 10.0
+		log.Printf("bull days: %d", l.bullDays)
+		if l.bullDays >= 0 {
+			if iv > avgIV*(1.02-float64(l.bullDays)/50.0) {
+				l.bullDays = -1
+				return base - (iv - 5)
+			} else {
+				l.bullDays++
+				return base - (iv-5)/5
+			}
+		} else {
+			if iv > avgIV*(0.98-float64(l.bullDays)/50.0) {
+				l.bullDays--
+				return base - (iv - 5)
+			} else {
+				l.bullDays = 1
+				return base - (iv-5)/5
+			}
+		}
+	}()
+	_ = v1signal
+
 	v2 := func() float64 {
 		if iv > avgIV {
 			// 低め
@@ -182,5 +210,5 @@ func (l *LeverageRatioStrategy) calcLeverageRatio(iv float64) float64 {
 	}()
 	_ = kelly
 
-	return v1
+	return v1signal
 }

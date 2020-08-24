@@ -9,7 +9,8 @@ import (
 func main() {
 	//index, iv := readData("19900102", "19991231")
 	//index, iv := readData("20000101", "20091231")
-	index, iv := readData("20100101", "20191231")
+	//index, iv := readData("20100101", "20191231")
+	index, iv := readData("20200101", "20200824")
 
 	// index, iv := readData("19900102", "20200814")
 	// index, iv := readData("20090101", "20200814")
@@ -18,7 +19,7 @@ func main() {
 
 	s := NewLeverageRatioStrategy()
 	a := NewAccount()
-	initial := 300.0
+	initial := 3000.0
 	income := 0.0
 	run(s, a, initial, income, index, iv)
 
