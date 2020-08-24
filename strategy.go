@@ -102,14 +102,11 @@ func (l *LeverageRatioStrategy) PrepareDay(a *Account, index float64, iv float64
 
 	nokosu := true
 	if nokosu {
-		if a.positions.ValuationLoss(index) > 0 {
-			a.SetLeverageWithClose2(index, lr)
-		} else {
-			a.CloseAll(index)
-		}
+		a.SetLeverageWithClose2(index, lr)
 	} else {
 		a.CloseAll(index)
 	}
+
 	a.FullOpenWithLeverage2(index, lr)
 }
 
