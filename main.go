@@ -8,9 +8,9 @@ import (
 
 func main() {
 	//index, iv := readData("19900102", "19991231")
-	//index, iv := readData("20000101", "20091231")
+	index, iv := readData("20000101", "20091231")
 	//index, iv := readData("20100101", "20191231")
-	index, iv := readData("20200101", "20200824")
+	//index, iv := readData("20200101", "20200824")
 
 	// index, iv := readData("19900102", "20200814")
 	// index, iv := readData("20090101", "20200814")
@@ -19,7 +19,7 @@ func main() {
 
 	s := NewLeverageRatioStrategy()
 	a := NewAccount()
-	initial := 3000.0
+	initial := 300.0
 	income := 0.0
 	run(s, a, initial, income, index, iv)
 
@@ -133,7 +133,16 @@ func printStat(initialDeposit, totalDeposit float64, vs []*dailyValuation) {
 	fmt.Printf("yearly return expect: %f\n", avg(yearlyReturns))
 	fmt.Printf("yearly return stdev: %f\n", stdev(yearlyReturns))
 	fmt.Printf("yearly sharp ratio: %f\n", avg(yearlyReturns)/stdev(yearlyReturns))
-	fmt.Printf("CAGR: %f\n", math.Pow(vs[size-1].valuation/totalDeposit, 1/float64(len(yearlyReturns))))
+	monthlyLogReturns := logReturns(initialDeposit, months)
+	yearlyLogReturns := logReturns(initialDeposit, years)
+	fmt.Printf("monthly log return expect: %f\n", math.Exp(avg(monthlyLogReturns)))
+	fmt.Printf("monthly log return stdev: %f\n", math.Exp(stdev(monthlyLogReturns)))
+	fmt.Printf("monthly log sharp ratio: %f\n", math.Exp(avg(monthlyLogReturns))/math.Exp(stdev(monthlyLogReturns)))
+	fmt.Printf("yearly log return expect: %f\n", math.Exp(avg(yearlyLogReturns)))
+	fmt.Printf("yearly log return stdev: %f\n", math.Exp(stdev(yearlyLogReturns)))
+	fmt.Printf("yearly log sharp ratio: %f\n", math.Exp(avg(yearlyLogReturns))/math.Exp(stdev(yearlyLogReturns)))
+	fmt.Printf("CAGR: %f\n", math.Exp(avg(yearlyLogReturns)))
+	fmt.Printf("Calmar ratio: %f\n", math.Exp(avg(yearlyLogReturns))/maxDrawdown)
 }
 
 func avg(vs []float64) float64 {
@@ -161,4 +170,14 @@ func returns(init float64, vs []float64) []float64 {
 		prev = v
 	}
 	return rs
+}
+
+func logReturns(init float64, vs []float64) []float64 {
+	logs := []float64{}
+	prev := init
+	for _, v := range vs {
+		logs = append(logs, math.Log(v/prev))
+		prev = v
+	}
+	return logs
 }
