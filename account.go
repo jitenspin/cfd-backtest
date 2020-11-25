@@ -41,6 +41,12 @@ func (a *Account) Valuation(current float64) float64 {
 	return a.unboundCash + a.positions.Valuation(current*BidFactor)
 }
 
+// 口座の実効レバレッジ
+func (a *Account) Leverage(current float64) float64 {
+	// Bidでいいのか微妙
+	return current * BidFactor * float64(a.positions.Size()) / a.Valuation(current)
+}
+
 // 指定した値以上のロスカット値のポジションをロスカット
 // そのポジションに設定されているロスカット値で決済する
 // スリップはしない
@@ -307,10 +313,27 @@ func (a *Account) CanOpenWithLeverage2(current float64, l float64) bool {
 	return r >= p.BoundMargin()
 }
 
+// 口座全体の実効レバレッジを指定した値に調整する
+// ロスカットレートはできるだけすべて同一にする
+func (a *Account) SetLeverage(current float64, l float64) {
+	l = math.Min(math.Max(l, 0), 10)
+	// 実効レバレッジ = 現在値 * 建玉数 / 時価評価総額
+	// 建玉数 = 実効レバレッジ * 時価評価総額 / 現在値
+	size := int(l * a.Valuation(current) / (current * BidFactor))
+	a.FixPositionSize(current, size)
+	if a.Positions().Size() != size {
+		log.Fatalf("SetLeverage: position size mismatch")
+	}
+}
+
 // 建玉の数を指定した数に調整する
 // できるだけ決済せずに済ます
 // すべて決済しても指定した数に届かないこともある
 func (a *Account) FixPositionSize(current float64, target int) {
+	// 現在持っている全建玉のロスカットレートを同じにかつできる限り低くする
+	// なぜなら、単価が大きい建玉から決済すると余力が大きく取り戻せるようになるため
+	a.SetMinimumLosscutValue(current)
+	// ポジションの数が多いなら建単価が大きい玉から決済
 	for a.Positions().Size() > target {
 		a.CloseMax(current)
 	}
@@ -322,4 +345,32 @@ func (a *Account) FixPositionSize(current float64, target int) {
 	// TODO
 	// 余力が最も大きく増えるものから決済したいが、
 	// ロスカット値もレバレッジも一定ではないとき、建単価によって決定することができない
+}
+
+// 全建玉のロスカット値を、できるだけ同一かつできるだけ低くする
+func (a *Account) SetMinimumLosscutValue(current float64) {
+	if a.positions.size == 0 {
+		return
+	}
+	// 全建玉の現在のロスカット値の平均を取得
+	sum := a.Positions().sum(func(p *Position) float64 {
+		return p.LosscutValue()
+	})
+	target := (sum - a.Remaining(current)) / float64(a.positions.size)
+
+	i := a.positions.minItem
+	doneNum := 0
+	doneSum := 0.0
+	for i != nil {
+		m := i.position.AdditionalMarginToLosscutValue(target)
+		i.position.SetLosscutValue(target)
+		a.unboundCash -= m
+		if i.position.LosscutValue() != target {
+			target = (sum - doneSum - a.Remaining(current)) / float64(a.positions.size-doneNum)
+		}
+
+		doneNum++
+		doneSum += i.position.LosscutValue()
+		i = i.next
+	}
 }
